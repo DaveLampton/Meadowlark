@@ -5,6 +5,13 @@ var app = express();
 // set up handlebars view engine
 var handlebars = require("express-handlebars").create({
   defaultLayout: "main",
+  helpers: {
+    section: function (name, options) {
+      if (!this._sections) this._sections = {};
+      this._sections[name] = options.fn(this);
+      return null;
+    },
+  },
 });
 app.engine("handlebars", handlebars.engine);
 app.set("view engine", "handlebars");
@@ -19,20 +26,74 @@ app.use((req, res, next) => {
   next();
 });
 
+const getWeatherData = () => {
+  return {
+    locations: [
+      {
+        name: "Portland",
+        forecastUrl: "http://www.wunderground.com/US/OR/Portland.html",
+        iconUrl: "http://icons-ak.wxug.com/i/c/k/cloudy.gif",
+        weather: "Overcast",
+        temp: "54.1 F (12.3 C)",
+      },
+      {
+        name: "Bend",
+        forecastUrl: "http://www.wunderground.com/US/OR/Bend.html",
+        iconUrl: "http://icons-ak.wxug.com/i/c/k/partlycloudy.gif",
+        weather: "Partly Cloudy",
+        temp: "55.0 F (12.8 C)",
+      },
+      {
+        name: "Manzanita",
+        forecastUrl: "http://www.wunderground.com/US/OR/Manzanita.html",
+        iconUrl: "http://icons-ak.wxug.com/i/c/k/rain.gif",
+        weather: "Light Rain",
+        temp: "55.0 F (12.8 C)",
+      },
+    ],
+  };
+};
+
+app.use(function (req, res, next) {
+  if (!res.locals.partialsData) res.locals.partialsData = {};
+  res.locals.partialsData.weatherContext = getWeatherData();
+  next();
+});
+
 app.get("/", (req, res) => {
   res.render("home");
 });
+
 app.get("/about", (req, res) => {
   res.render("about", {
     fortune: fortune.getFortune(),
     pageTestScript: "/qa/tests-about.js",
   });
 });
+
 app.get("/tours/hood-river", (req, res) => {
   res.render("tours/hood-river");
 });
+
 app.get("/tours/request-group-rate", (req, res) => {
   res.render("tours/request-group-rate");
+});
+
+app.get("/jquery-test", function (req, res) {
+  res.render("jquery-test");
+});
+
+app.get("/nursery-rhyme", function (req, res) {
+  res.render("nursery-rhyme");
+});
+
+app.get("/data/nursery-rhyme", function (req, res) {
+  res.json({
+    animal: "squirrel",
+    bodyPart: "tail",
+    adjective: "bushy",
+    noun: "a shrubbery",
+  });
 });
 
 // 404 catch-all handler (middleware)
