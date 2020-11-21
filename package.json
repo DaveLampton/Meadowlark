@@ -1,6 +1,6 @@
 {
   "name": "meadowlarktravel",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "Sample website for Web Development with Node and Express (O'Reilly).",
   "main": "meadowlark.js",
   "scripts": {
@@ -21,6 +21,10 @@
     "express-handlebars": "^5.2.0"
   },
   "devDependencies": {
-    "mocha": "^8.2.1"
+    "chai": "^4.2.0",
+    "eslint": "^7.14.0",
+    "link-checker": "^1.4.1",
+    "mocha": "^8.2.1",
+    "zombie": "^6.1.4"
   }
 }
