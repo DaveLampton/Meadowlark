@@ -1,4 +1,5 @@
 var express = require("express");
+var formidable = require("formidable");
 var fortune = require("./lib/fortune");
 var app = express();
 
@@ -19,6 +20,9 @@ app.set("view engine", "handlebars");
 app.set("port", process.env.PORT || 3000);
 
 app.use(express.static(__dirname + "/public"));
+
+app.use(express.json()); // for parsing application/json
+app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 app.use((req, res, next) => {
   res.locals.showTests =
@@ -96,19 +100,58 @@ app.get("/data/nursery-rhyme", function (req, res) {
   });
 });
 
+app.get("/newsletter", function (req, res) {
+  // we will learn about CSRF later...for now, we just
+  // provide a dummy value
+  res.render("newsletter", { csrf: "CSRF token goes here" });
+});
+app.post("/process", function (req, res) {
+  if (req.xhr || req.accepts("json,html") === "json") {
+    console.log("XHR request: req.body = ", req.body);
+    // if there were an error, we would send { error: 'error description' }
+    res.send({ success: true });
+  } else {
+    console.log("regular form POST: req.body = ", req.body);
+    // if there were an error, we would redirect to an error page
+    res.redirect(303, "/thank-you");
+  }
+});
+app.get("/thank-you", function (req, res) {
+  res.render("thank-you");
+});
+
+app.get("/contest/vacation-photo", function (req, res) {
+  var now = new Date();
+  res.render("contest/vacation-photo", {
+    year: now.getFullYear(),
+    month: now.getMonth(),
+  });
+});
+app.post("/contest/vacation-photo/:year/:month", function (req, res) {
+  var form = new formidable.IncomingForm();
+  form.parse(req, function (err, fields, files) {
+    if (err) return res.redirect(303, "/error");
+    console.log("received fields:");
+    console.log(fields);
+    console.log("received files:");
+    console.log(files);
+    res.redirect(303, "/thank-you");
+  });
+});
+
 // 404 catch-all handler (middleware)
+// eslint-disable-next-line no-unused-vars
 app.use((req, res, next) => {
   res.status(404);
   res.render("404");
-  next();
 });
 
 // 500 error handler (middleware)
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500);
   res.render("500");
-  next();
 });
 
 app.listen(app.get("port"), () => {
