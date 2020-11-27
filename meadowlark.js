@@ -83,8 +83,8 @@ function getWeatherData() {
 
 // middleware to add weather data to context
 app.use(function (req, res, next) {
-  if (!res.locals.partials) res.locals.partials = {};
-  res.locals.partials.weatherContext = getWeatherData();
+  if (!res.locals.partialsData) res.locals.partialsData = {};
+  res.locals.partialsData.weatherContext = getWeatherData();
   next();
 });
 
@@ -193,6 +193,7 @@ app.post("/contest/vacation-photo/:year/:month", function (req, res) {
 app.use(function (req, res, next) {
   res.status(404);
   res.render("404");
+  if (next) next();
 });
 
 // 500 error handler (middleware)
@@ -200,6 +201,7 @@ app.use(function (err, req, res, next) {
   console.error(err.stack);
   res.status(500);
   res.render("500");
+  if (next) next();
 });
 
 app.listen(app.get("port"), function () {
