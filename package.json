@@ -1,6 +1,6 @@
 {
   "name": "meadowlark",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Demo Node/Express project adapted from 'Web Development with Node and Express' (O'Reilly).",
   "main": "meadowlark.js",
   "scripts": {
@@ -17,8 +17,10 @@
   },
   "homepage": "https://github.com/DaveLampton/Meadowlark",
   "dependencies": {
+    "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
     "express-handlebars": "^5.2.0",
+    "express-session": "^1.17.1",
     "formidable": "^1.2.2"
   },
   "devDependencies": {
