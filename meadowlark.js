@@ -1,14 +1,14 @@
-var express = require("express"),
+const express = require("express"),
   fortune = require("./lib/fortune.js"),
   formidable = require("formidable");
 
-var app = express();
+const app = express();
 
 // set up handlebars view engine
-var handlebars = require("express-handlebars").create({
+const handlebars = require("express-handlebars").create({
   defaultLayout: "main",
   helpers: {
-    section: function (name, options) {
+    section: (name, options) => {
       if (!this._sections) this._sections = {};
       this._sections[name] = options.fn(this);
       return null;
@@ -20,8 +20,9 @@ app.set("view engine", "handlebars");
 
 app.set("port", process.env.PORT || 3000);
 
-app.use(express.json()); // for parsing application/json
+app.use(express.static(__dirname + "/public"));
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(express.json()); // for parsing application/json
 
 app.use(require("cookie-parser")(process.env.APP_SECRET));
 app.use(
@@ -34,22 +35,21 @@ app.use(
     },
   })
 );
-app.use(express.static(__dirname + "/public"));
 
 // flash message middleware
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
   // if there's a flash message, transfer
   // it to the context, then clear it
   res.locals.flash = req.session.flash;
   delete req.session.flash;
-  next();
+  if (next) next();
 });
 
 // set 'showTests' context property if the querystring contains test=1
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
   res.locals.showTests =
     app.get("env") !== "production" && req.query.test === "1";
-  next();
+  if (next) next();
 });
 
 // mocked weather data
@@ -82,37 +82,37 @@ function getWeatherData() {
 }
 
 // middleware to add weather data to context
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
   if (!res.locals.partialsData) res.locals.partialsData = {};
   res.locals.partialsData.weatherContext = getWeatherData();
-  next();
+  if (next) next();
 });
 
-app.get("/", function (req, res) {
+app.get("/", (req, res) => {
   res.render("home");
 });
-app.get("/about", function (req, res) {
+app.get("/about", (req, res) => {
   res.render("about", {
     fortune: fortune.getFortune(),
     pageTestScript: "/qa/tests-about.js",
   });
 });
-app.get("/tours/hood-river", function (req, res) {
+app.get("/tours/hood-river", (req, res) => {
   res.render("tours/hood-river");
 });
-app.get("/tours/oregon-coast", function (req, res) {
+app.get("/tours/oregon-coast", (req, res) => {
   res.render("tours/oregon-coast");
 });
-app.get("/tours/request-group-rate", function (req, res) {
+app.get("/tours/request-group-rate", (req, res) => {
   res.render("tours/request-group-rate");
 });
-app.get("/jquery-test", function (req, res) {
+app.get("/jquery-test", (req, res) => {
   res.render("jquery-test");
 });
-app.get("/nursery-rhyme", function (req, res) {
+app.get("/nursery-rhyme", (req, res) => {
   res.render("nursery-rhyme");
 });
-app.get("/data/nursery-rhyme", function (req, res) {
+app.get("/data/nursery-rhyme", (req, res) => {
   res.json({
     animal: "squirrel",
     bodyPart: "tail",
@@ -120,23 +120,23 @@ app.get("/data/nursery-rhyme", function (req, res) {
     noun: "heck",
   });
 });
-app.get("/thank-you", function (req, res) {
+app.get("/thank-you", (req, res) => {
   res.render("thank-you");
 });
-app.get("/newsletter", function (req, res) {
+app.get("/newsletter", (req, res) => {
   res.render("newsletter");
 });
 
 // for now, we're mocking NewsletterSignup:
 function NewsletterSignup() {}
-NewsletterSignup.prototype.save = function (cb) {
+NewsletterSignup.prototype.save = (cb) => {
   cb();
 };
 
-var VALID_EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+const VALID_EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
-app.post("/newsletter", function (req, res) {
-  var name = req.body.name || "",
+app.post("/newsletter", (req, res) => {
+  let name = req.body.name || "",
     email = req.body.email || "";
   // input validation
   if (!email.match(VALID_EMAIL_REGEX)) {
@@ -148,7 +148,7 @@ app.post("/newsletter", function (req, res) {
     };
     return res.redirect(303, "/newsletter/archive");
   }
-  new NewsletterSignup({ name: name, email: email }).save(function (err) {
+  new NewsletterSignup({ name: name, email: email }).save((err) => {
     if (err) {
       if (req.xhr) return res.json({ error: "Database error." });
       req.session.flash = {
@@ -167,19 +167,19 @@ app.post("/newsletter", function (req, res) {
     return res.redirect(303, "/newsletter/archive");
   });
 });
-app.get("/newsletter/archive", function (req, res) {
+app.get("/newsletter/archive", (req, res) => {
   res.render("newsletter/archive");
 });
-app.get("/contest/vacation-photo", function (req, res) {
-  var now = new Date();
+app.get("/contest/vacation-photo", (req, res) => {
+  let now = new Date();
   res.render("contest/vacation-photo", {
     year: now.getFullYear(),
     month: now.getMonth(),
   });
 });
-app.post("/contest/vacation-photo/:year/:month", function (req, res) {
-  var form = new formidable.IncomingForm();
-  form.parse(req, function (err, fields, files) {
+app.post("/contest/vacation-photo/:year/:month", (req, res) => {
+  let form = new formidable.IncomingForm();
+  form.parse(req, (err, fields, files) => {
     if (err) return res.redirect(303, "/error");
     console.log("received fields:");
     console.log(fields);
@@ -190,21 +190,21 @@ app.post("/contest/vacation-photo/:year/:month", function (req, res) {
 });
 
 // 404 catch-all handler (middleware)
-app.use(function (req, res, next) {
+// eslint-disable-next-line no-unused-vars
+app.use((req, res, next) => {
   res.status(404);
   res.render("404");
-  if (next) next();
 });
 
 // 500 error handler (middleware)
-app.use(function (err, req, res, next) {
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500);
   res.render("500");
-  if (next) next();
 });
 
-app.listen(app.get("port"), function () {
+app.listen(app.get("port"), () => {
   console.log(
     "Express started on http://localhost:" +
       app.get("port") +
