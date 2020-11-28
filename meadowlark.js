@@ -1,6 +1,7 @@
 const express = require("express"),
-  fortune = require("./lib/fortune.js"),
-  formidable = require("formidable");
+  fortune = require("./lib/fortune"),
+  formidable = require("formidable"),
+  Vacation = require("./models/vacation");
 
 const app = express();
 
@@ -25,16 +26,43 @@ app.use(express.urlencoded({ extended: true })); // for parsing application/x-ww
 app.use(express.json()); // for parsing application/json
 
 app.use(require("cookie-parser")(process.env.APP_SECRET));
+
+var session = require("express-session");
+var MongoDBStore = require("connect-mongodb-session")(session);
+var store = new MongoDBStore({
+  uri: process.env.MONGO_DB_URL,
+  databaseName: "test",
+  collection: "sessions",
+});
 app.use(
   require("express-session")({
     resave: false,
     saveUninitialized: false,
     secret: process.env.APP_SECRET,
     cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       sameSite: true,
     },
+    store: store,
   })
 );
+
+// database configuration
+var mongoose = require("mongoose");
+var options = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+};
+switch (app.get("env")) {
+  case "development":
+    mongoose.connect(process.env.MONGO_DB_URL, options);
+    break;
+  case "production":
+    mongoose.connect(process.env.MONGO_DB_URL, options);
+    break;
+  default:
+    throw new Error("Unknown execution environment: " + app.get("env"));
+}
 
 // flash message middleware
 app.use((req, res, next) => {
@@ -187,6 +215,28 @@ app.post("/contest/vacation-photo/:year/:month", (req, res) => {
     console.log(files);
     res.redirect(303, "/thank-you");
   });
+});
+
+app.get("/vacations", (req, res) => {
+  //req.session.test = "Hello MongoDB";
+  Vacation.find({ available: true, inSeason: true }, (err, vacations) => {
+    var currency = req.session.currency || "USD";
+    var context = {
+      currency: currency,
+      vacations: vacations.map((vacation) => {
+        return {
+          sku: vacation.sku,
+          name: vacation.name,
+          description: vacation.description,
+          inSeason: vacation.inSeason,
+          price: "$" + vacation.priceInCents / 100,
+          qty: vacation.qty,
+        };
+      }),
+    };
+    res.render("vacations", context);
+  });
+  //console.log("Test cookie:", req.session.test);
 });
 
 // 404 catch-all handler (middleware)
