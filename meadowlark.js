@@ -88,6 +88,26 @@ app.use((req, res, next) => {
 
 // Routes listed in routes.js
 require("./routes")(app);
+// (Note to self: for alternative routing schemes, checkout the
+// 'express-namespace' and 'express-resource' packages)
+
+// for routes not found above, setup automatic
+// routes for the views found in the filesystem
+let autoViews = {};
+const fs = require("fs");
+app.use(function (req, res, next) {
+  let path = req.path.toLowerCase();
+  // if it's already in autoViews, render the view
+  if (autoViews[path]) return res.render(autoViews[path]);
+  // if it's not yet in autoViews, see if there's a
+  // .handlebars file that matches the path and render it
+  if (fs.existsSync(__dirname + "/views" + path + ".handlebars")) {
+    autoViews[path] = path.replace(/^\//, "");
+    return res.render(autoViews[path]);
+  }
+  // no view found; pass on to 404 handler
+  next();
+});
 
 // 404 catch-all handler (middleware)
 // eslint-disable-next-line no-unused-vars
@@ -106,8 +126,6 @@ app.use((err, req, res, next) => {
 
 app.listen(app.get("port"), () => {
   console.log(
-    "Express started on http://localhost:" +
-      app.get("port") +
-      "; press Ctrl-C to terminate."
+    `Meadowlark app listening on http://localhost:${app.get("port")}/`
   );
 });
