@@ -12,6 +12,9 @@ const handlebars = require("express-handlebars").create({
       this._sections[name] = options.fn(this);
       return null;
     },
+    static: function (resource) {
+      return require("./lib/static.js").map(resource);
+    },
   },
 });
 app.engine("handlebars", handlebars.engine);
