@@ -30,6 +30,7 @@
     "eslint": "^7.14.0",
     "link-checker": "^1.4.1",
     "mocha": "^8.2.1",
+    "restler": "^3.4.0",
     "zombie": "^6.1.4"
   }
 }
