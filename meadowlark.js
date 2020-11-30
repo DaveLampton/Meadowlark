@@ -49,6 +49,13 @@ app.use(
   })
 );
 
+// CSRF protection (must follow cookie/session initialization)
+app.use(require("csurf")());
+app.use(function (req, res, next) {
+  res.locals._csrfToken = req.csrfToken();
+  next();
+});
+
 // setup mongoose for MongoDB
 const mongoose = require("mongoose");
 const options = {
